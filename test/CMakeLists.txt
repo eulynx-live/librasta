@@ -1,8 +1,13 @@
-
-include(FindPkgConfig)
-if(PKG_CONFIG_FOUND)
+if(USE_VCPKG)
+  find_package(unofficial-cunit CONFIG REQUIRED)
+  set(CUNIT_PACKAGE unofficial::cunit::cunit)
+else()
+  include(FindPkgConfig)
+  if(PKG_CONFIG_FOUND)
     pkg_check_modules(CUnit IMPORTED_TARGET cunit)
-endif(PKG_CONFIG_FOUND)
+    set(CUNIT_PACKAGE PkgConfig::CUnit)
+  endif(PKG_CONFIG_FOUND)
+endif(USE_VCPKG)
 
 add_executable(rasta_test
     ../examples/common/c/configfile.c
@@ -37,7 +42,7 @@ add_executable(rasta_test
     rasta_test/c/safety_retransmission_test.c
 )
 target_include_directories(rasta_test PRIVATE rasta_test/headers ../examples/common/headers)
-target_link_libraries(rasta_test rasta_udp PkgConfig::CUnit)
+target_link_libraries(rasta_test rasta_udp ${CUNIT_PACKAGE})
 target_compile_definitions(rasta_test PRIVATE WITH_CMAKE)
 
 add_dependencies(rasta_test rasta_udp)
@@ -71,7 +76,7 @@ foreach(RASTA_VARIANT ${RASTA_VARIANTS})
     )
 
     target_include_directories(rasta_transport_test_${RASTA_VARIANT} PRIVATE rasta_transport_test/headers)
-    target_link_libraries(rasta_transport_test_${RASTA_VARIANT} rasta_${RASTA_VARIANT} PkgConfig::CUnit)
+    target_link_libraries(rasta_transport_test_${RASTA_VARIANT} rasta_${RASTA_VARIANT} ${CUNIT_PACKAGE})
     target_compile_definitions(rasta_transport_test_${RASTA_VARIANT} PRIVATE WITH_CMAKE)
 
     add_dependencies(rasta_transport_test_${RASTA_VARIANT} rasta_${RASTA_VARIANT})
