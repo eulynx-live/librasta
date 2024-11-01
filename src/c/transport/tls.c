@@ -184,7 +184,7 @@ int tcp_connect(rasta_transport_channel *channel) {
     wolfSSL_KeepArrays(channel->ssl);
 #ifdef WOLFSSL_SET_TLS13_SECRET_CB_EXISTS
     /* optional logging for wireshark */
-    char *sslkeylogfile_path = getenv("TLS_SECRET_LOGFILE_PATH");
+    char *sslkeylogfile_path = getenv("SSLKEYLOGFILE");
     if (sslkeylogfile_path != NULL) {
         wolfSSL_set_tls13_secret_cb(channel->ssl, Tls13SecretCallback,
                                     sslkeylogfile_path);
