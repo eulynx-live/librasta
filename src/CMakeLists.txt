@@ -1,7 +1,7 @@
 if(ENABLE_RASTA_TLS)
     find_package(WolfSSL REQUIRED)
     include(CheckSymbolExists)
-    check_symbol_exists(HAVE_SECRET_CALLBACK "wolfssl/options.h" WOLFSSL_SET_TLS13_SECRET_CB_EXISTS)
+    check_symbol_exists(HAVE_SECRET_CALLBACK "${WolfSSL_INCLUDE_DIRS}/wolfssl/options.h" WOLFSSL_SET_TLS13_SECRET_CB_EXISTS)
     if(WOLFSSL_SET_TLS13_SECRET_CB_EXISTS)
         add_compile_definitions("WOLFSSL_SET_TLS13_SECRET_CB_EXISTS")
         message("Found method wolfSSL_set_tls13_secret_cb - can provide TLS keys for debugging!")
