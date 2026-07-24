@@ -51,6 +51,11 @@ void update_confirmed_attrs(struct rasta_connection *connection, struct RastaPac
 int handle_discreq(struct rasta_connection *connection, struct RastaPacket *receivedPacket) {
     logger_log(connection->logger, LOG_LEVEL_INFO, "RaSTA HANDLE: DisconnectionRequest", "received DiscReq");
 
+    // 5.6.2 requires updating values according to [1] (CS_T = SN_PDU)
+    // But: DiscReq messages are not confirmed and necessarily last. DiscReq message carry relevant CS values.
+    connection->cs_r = receivedPacket->confirmed_sequence_number;
+    sr_remove_confirmed_messages(connection);
+
     connection->current_state = RASTA_CONNECTION_CLOSED;
     sr_reset_connection(connection);
 
