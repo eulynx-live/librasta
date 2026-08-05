@@ -16,6 +16,7 @@ option(ENABLE_RASTA_TLS "Enable RaSTA over TLS" OFF)
 option(ENABLE_RASTA_OPAQUE "Enable Password-Authenticated Session Key Exchange based on OPAQUE" OFF)
 option(ENABLE_CODE_COVERAGE "Provide command to generate code coverage report" OFF)
 option(ENABLE_STATIC_ANALYSIS "Run cppcheck along with the compiler" OFF)
+option(USE_VCPKG "Make changes needed to use dependencies from Vcpkg" OFF)
 
 if(ENABLE_STATIC_ANALYSIS)
     set(CMAKE_C_CPPCHECK "cppcheck" "--enable=performance,information")
