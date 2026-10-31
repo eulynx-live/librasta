@@ -55,7 +55,12 @@ int red_f_deliverDeferQueue(rasta_connection *con, rasta_redundancy_channel *cha
     return result;
 }
 
-int red_f_receiveData(rasta_redundancy_channel *channel, struct RastaRedundancyPacket packet, int channel_id) {
+/**
+ * Checks a received packet and adds it to the defer queue if it has to be delivered.
+ * Doesn't free discarded packets, see red_f_receiveData.
+ * @return 1 if the packet has the next expected sequence number, 0 otherwise
+ */
+static int red_f_processData(rasta_redundancy_channel *channel, struct RastaRedundancyPacket packet, int channel_id) {
     int result = 0;
 
     logger_log(channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red receive", "Channel %d: ptr=%p", channel_id, (void *)channel);
@@ -163,6 +168,21 @@ int red_f_receiveData(rasta_redundancy_channel *channel, struct RastaRedundancyP
 
         // discard message
         return 0;
+    }
+
+    return result;
+}
+
+int red_f_receiveData(rasta_redundancy_channel *channel, struct RastaRedundancyPacket packet, int channel_id) {
+    unsigned int deferred_count = channel->defer_q.count;
+    int result = red_f_processData(channel, packet, channel_id);
+
+    // The defer queue takes ownership of the packet's byte arrays and frees them on delivery.
+    // Discarded packets (e.g. duplicates received on another transport channel) have to be freed here.
+    // length is 0 if bytesToRastaPacket rejected the packet before allocating anything.
+    if (channel->defer_q.count == deferred_count && packet.data.length != 0) {
+        freeRastaByteArray(&packet.data.data);
+        freeRastaByteArray(&packet.data.checksum);
     }
 
     return result;
