@@ -43,9 +43,11 @@ void test_sr_retransmit_data_shouldSendFinalHeartbeat() {
     configRetransmission.max_retransmission_queue_size = 100;
     info.retransmission = configRetransmission;
 
-    redundancy_mux mux;
+    redundancy_mux mux = {0};
     redundancy_mux_alloc(&rasta_h, &mux, &logger, &info);
+    rasta_redundancy_channel *allocated_channel = mux.redundancy_channel;
     mux.sr_hashing_context.hash_length = RASTA_CHECKSUM_NONE;
+    freeRastaByteArray(&mux.sr_hashing_context.key);
     rasta_md4_set_key(&mux.sr_hashing_context, 0, 0, 0, 0);
 
     rasta_redundancy_channel fake_channel;
@@ -91,7 +93,8 @@ void test_sr_retransmit_data_shouldSendFinalHeartbeat() {
     rfree(hb_message);
 
     freeRastaByteArray(&fake_channel.hashing_context.key);
-    freeRastaByteArray(&mux.sr_hashing_context.key);
+    mux.redundancy_channel = allocated_channel;
+    redundancy_mux_close(&mux);
 }
 
 void test_sr_retransmit_data_shouldRetransmitPackage() {
@@ -116,9 +119,11 @@ void test_sr_retransmit_data_shouldRetransmitPackage() {
     configRetransmission.max_retransmission_queue_size = 100;
     info.retransmission = configRetransmission;
 
-    redundancy_mux mux;
+    redundancy_mux mux = {0};
     redundancy_mux_alloc(&rasta_h, &mux, &logger, &info);
+    rasta_redundancy_channel *allocated_channel = mux.redundancy_channel;
     mux.sr_hashing_context.hash_length = RASTA_CHECKSUM_NONE;
+    freeRastaByteArray(&mux.sr_hashing_context.key);
     rasta_md4_set_key(&mux.sr_hashing_context, 0, 0, 0, 0);
 
     rasta_redundancy_channel fake_channel;
@@ -192,6 +197,9 @@ void test_sr_retransmit_data_shouldRetransmitPackage() {
     CU_ASSERT_EQUAL(8 + 28, hb_message->length);
     CU_ASSERT_EQUAL(RASTA_TYPE_HB, leShortToHost(hb_message->bytes + 8 + 2));
 
+    struct RastaByteArray *queued = fifo_pop(connection.fifo_retransmission);
+    freeRastaByteArray(queued);
+    rfree(queued);
     fifo_destroy(&connection.fifo_retransmission);
     fifo_destroy(&test_send_fifo);
 
@@ -203,7 +211,8 @@ void test_sr_retransmit_data_shouldRetransmitPackage() {
     freeRastaByteArray(&data.data);
     freeRastaByteArray(&hashing_context.key);
     freeRastaByteArray(&fake_channel.hashing_context.key);
-    freeRastaByteArray(&mux.sr_hashing_context.key);
+    mux.redundancy_channel = allocated_channel;
+    redundancy_mux_close(&mux);
 }
 
 void test_sr_handle_conreq_shouldInitializeSequenceNumberFromConfig() {
@@ -229,9 +238,11 @@ void test_sr_handle_conreq_shouldInitializeSequenceNumberFromConfig() {
     configRetransmission.max_retransmission_queue_size = 100;
     info.retransmission = configRetransmission;
 
-    redundancy_mux mux;
+    redundancy_mux mux = {0};
     redundancy_mux_alloc(&rasta_h, &mux, &logger, &info);
+    rasta_redundancy_channel *allocated_channel = mux.redundancy_channel;
     mux.sr_hashing_context.hash_length = RASTA_CHECKSUM_NONE;
+    freeRastaByteArray(&mux.sr_hashing_context.key);
     rasta_md4_set_key(&mux.sr_hashing_context, 0, 0, 0, 0);
 
     rasta_redundancy_channel fake_channel;
@@ -294,5 +305,6 @@ void test_sr_handle_conreq_shouldInitializeSequenceNumberFromConfig() {
 
     freeRastaByteArray(&hashing_context.key);
     freeRastaByteArray(&fake_channel.hashing_context.key);
-    freeRastaByteArray(&mux.sr_hashing_context.key);
+    mux.redundancy_channel = allocated_channel;
+    redundancy_mux_close(&mux);
 }

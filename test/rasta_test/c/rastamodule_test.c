@@ -66,6 +66,8 @@ void testConversion() {
             CU_ASSERT_EQUAL(s.checksum_correct, 0)
         else
             CU_ASSERT_EQUAL(s.checksum_correct, 1);
+        freeRastaByteArray(&s.data);
+        freeRastaByteArray(&s.checksum);
 
         // check data failure
         r.length = 2;
