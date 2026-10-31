@@ -12,7 +12,7 @@ struct RastaByteArray {
 };
 
 /**
- * Frees the bytes array and sets length to 0
+ * Frees the bytes array, sets the pointer to NULL and length to 0. Freeing the same array again does nothing.
  * @param data the byte array
  */
 void freeRastaByteArray(struct RastaByteArray *data);
