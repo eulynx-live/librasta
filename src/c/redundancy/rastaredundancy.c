@@ -16,7 +16,14 @@
 int _deliver_message_to_upper_layer(rasta_connection *h, rasta_redundancy_channel *channel, struct RastaByteArray message) {
     struct RastaPacket packet;
     bytesToRastaPacket(message, &channel->hashing_context, &packet);
-    return sr_receive(h, &packet);
+    int result = sr_receive(h, &packet);
+
+    // The safety layer frees the packet's byte arrays only on some paths (e.g. not for heartbeats).
+    // Arrays it already freed are NULL, freeing them again does nothing.
+    freeRastaByteArray(&packet.data);
+    freeRastaByteArray(&packet.checksum);
+
+    return result;
 }
 
 /**
