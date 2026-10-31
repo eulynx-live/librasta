@@ -265,6 +265,7 @@ int data_send_event(void *carry_data, int fd) {
             freeRastaMessageData(&app_messages);
             freeRastaByteArray(&packet);
             freeRastaByteArray(&data.data);
+            freeRastaByteArray(&data.checksum);
         }
     }
 

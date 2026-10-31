@@ -348,6 +348,7 @@ void sr_retransmit_data(rasta_connection *connection) {
         freeRastaByteArray(&old_p.data);
         freeRastaByteArray(&old_p.checksum);
         freeRastaByteArray(&data.data);
+        freeRastaByteArray(&data.checksum);
 
         freeRastaMessageData(&app_messages);
     }
@@ -475,6 +476,7 @@ struct rasta_connection *sr_connect(struct rasta_handle *h) {
     connection->current_state = RASTA_CONNECTION_START;
 
     freeRastaByteArray(&conreq.data);
+    freeRastaByteArray(&conreq.checksum);
 
     // fire connection state changed event
     fire_on_connection_state_change(sr_create_notification_result(NULL, connection));

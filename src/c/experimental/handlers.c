@@ -53,6 +53,8 @@ int handle_kex_request(struct rasta_connection *connection, struct RastaPacket *
                                              &connection->config->kex, connection->logger);
 
                 redundancy_mux_send(connection->redundancy_channel, &response, connection->role);
+                freeRastaByteArray(&response.data);
+                freeRastaByteArray(&response.checksum);
 
                 // set values according to 5.6.2 [3]
                 connection->sn_r = receivedPacket->sequence_number + 1;
@@ -135,6 +137,8 @@ int handle_kex_response(struct rasta_connection *connection, struct RastaPacket 
                 response = createKexAuthentication(connection->remote_id, connection->my_id, connection->sn_t, receivedPacket->sequence_number, cur_timestamp(), receivedPacket->timestamp, &connection->redundancy_channel->mux->sr_hashing_context, connection->kex_state.user_auth_server, sizeof(connection->kex_state.user_auth_server), connection->logger);
 
                 redundancy_mux_send(connection->redundancy_channel, &response, connection->role);
+                freeRastaByteArray(&response.data);
+                freeRastaByteArray(&response.checksum);
 
                 // set values according to 5.6.2 [3]
                 connection->sn_r = receivedPacket->sequence_number + 1;
@@ -263,6 +267,8 @@ void send_KexRequest(struct rasta_connection *connection) {
     }
 
     redundancy_mux_send(connection->redundancy_channel, &hb, connection->role);
+    freeRastaByteArray(&hb.data);
+    freeRastaByteArray(&hb.checksum);
 
     connection->sn_t = connection->sn_t + 1;
 
