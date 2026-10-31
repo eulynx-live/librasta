@@ -98,6 +98,7 @@ void sr_remove_confirmed_messages(struct rasta_connection *con) {
 
         freeRastaByteArray(elem);
         freeRastaByteArray(&packet.data);
+        freeRastaByteArray(&packet.checksum);
         rfree(elem);
 
         // message is confirmed when CS_R - SN_PDU >= 0
