@@ -80,8 +80,6 @@ void sr_add_app_messages_to_buffer(struct rasta_connection *con, struct RastaPac
         sr_diagnostic_update(con, packet, &con->config->sending);
     }
 
-    freeRastaByteArray(&packet->data);
-    freeRastaByteArray(&packet->checksum);
     freeRastaMessageData(&received_data);
 }
 
@@ -570,6 +568,7 @@ int sr_receive(rasta_connection *con, struct RastaPacket *receivedPacket) {
         handle_conreq(con, receivedPacket);
 
         freeRastaByteArray(&receivedPacket->data);
+        freeRastaByteArray(&receivedPacket->checksum);
         return 0;
     }
 
@@ -579,6 +578,7 @@ int sr_receive(rasta_connection *con, struct RastaPacket *receivedPacket) {
         // TODO: can these packets be ignored?
 
         freeRastaByteArray(&receivedPacket->data);
+        freeRastaByteArray(&receivedPacket->checksum);
         return 0;
     }
 
@@ -587,6 +587,7 @@ int sr_receive(rasta_connection *con, struct RastaPacket *receivedPacket) {
         handle_conresp(con, receivedPacket);
 
         freeRastaByteArray(&receivedPacket->data);
+        freeRastaByteArray(&receivedPacket->checksum);
         // Break from processing (i.e. sr_connect)
         return 1;
     }
@@ -600,6 +601,7 @@ int sr_receive(rasta_connection *con, struct RastaPacket *receivedPacket) {
         con->errors.safety++;
 
         freeRastaByteArray(&receivedPacket->data);
+        freeRastaByteArray(&receivedPacket->checksum);
         return 0;
     }
 
@@ -610,6 +612,7 @@ int sr_receive(rasta_connection *con, struct RastaPacket *receivedPacket) {
         con->errors.address++;
 
         freeRastaByteArray(&receivedPacket->data);
+        freeRastaByteArray(&receivedPacket->checksum);
         return 0;
     }
 
@@ -621,6 +624,7 @@ int sr_receive(rasta_connection *con, struct RastaPacket *receivedPacket) {
         con->errors.sn++;
 
         freeRastaByteArray(&receivedPacket->data);
+        freeRastaByteArray(&receivedPacket->checksum);
         return 0;
     }
 
@@ -632,6 +636,7 @@ int sr_receive(rasta_connection *con, struct RastaPacket *receivedPacket) {
         con->errors.cs++;
 
         freeRastaByteArray(&receivedPacket->data);
+        freeRastaByteArray(&receivedPacket->checksum);
         return 0;
     }
 
@@ -639,10 +644,14 @@ int sr_receive(rasta_connection *con, struct RastaPacket *receivedPacket) {
         logger_log(con->logger, LOG_LEVEL_ERROR, "RaSTA KEX", "Did not receive key exchange request for rekeying in time at %" PRIu64 " - disconnecting!", get_current_time_ms());
         sr_close_connection(con, RASTA_DISC_REASON_TIMEOUT, 0);
         freeRastaByteArray(&receivedPacket->data);
+        freeRastaByteArray(&receivedPacket->checksum);
         return 0;
     }
 
-    return handle_received_packet(con, receivedPacket);
+    const int result = handle_received_packet(con, receivedPacket);
+    freeRastaByteArray(&receivedPacket->data);
+    freeRastaByteArray(&receivedPacket->checksum);
+    return result;
 }
 
 void sr_closed_connection(rasta_connection *connection, unsigned long id) {

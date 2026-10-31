@@ -143,8 +143,8 @@ void bytesToRastaPacket(struct RastaByteArray data, rasta_hashing_context_t *has
     result->checksum_correct = 1;
 
     if (data.length < 28 + hashing_context->hash_length * 8) {
-        result->length = 0;
-        result->checksum_correct = 0;
+        // Clear all fields, so the byte arrays can be freed without having been allocated
+        rmemset(result, 0, sizeof(*result));
         rastamodule_lasterror = RASTA_ERRORS_PACKAGE_LENGTH_INVALID;
         return;
     }

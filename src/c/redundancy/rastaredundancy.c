@@ -16,14 +16,7 @@
 int _deliver_message_to_upper_layer(rasta_connection *h, rasta_redundancy_channel *channel, struct RastaByteArray message) {
     struct RastaPacket packet;
     bytesToRastaPacket(message, &channel->hashing_context, &packet);
-    int result = sr_receive(h, &packet);
-
-    // The safety layer frees the packet's byte arrays only on some paths (e.g. not for heartbeats).
-    // Arrays it already freed are NULL, freeing them again does nothing.
-    freeRastaByteArray(&packet.data);
-    freeRastaByteArray(&packet.checksum);
-
-    return result;
+    return sr_receive(h, &packet);
 }
 
 /**
@@ -62,20 +55,15 @@ int red_f_deliverDeferQueue(rasta_connection *con, rasta_redundancy_channel *cha
     return result;
 }
 
-/**
- * Checks a received packet and adds it to the defer queue if it has to be delivered.
- * Doesn't free discarded packets, see red_f_receiveData.
- * @return 1 if the packet has the next expected sequence number, 0 otherwise
- */
-static int red_f_processData(rasta_redundancy_channel *channel, struct RastaRedundancyPacket packet, int channel_id) {
-    int result = 0;
-
+int red_f_receiveData(rasta_redundancy_channel *channel, struct RastaRedundancyPacket packet, int channel_id) {
     logger_log(channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red receive", "Channel %d: ptr=%p", channel_id, (void *)channel);
 
     if (!packet.checksum_correct) {
         logger_log(channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red receive", "Channel 0: Packet checksum incorrect on channel %d", channel_id);
 
         // checksum incorrect, exit function
+        freeRastaByteArray(&packet.data.data);
+        freeRastaByteArray(&packet.data.checksum);
         return 0;
     }
 
@@ -90,6 +78,8 @@ static int red_f_processData(rasta_redundancy_channel *channel, struct RastaRedu
     if (channel->seq_rx == 0 && channel->seq_tx == 0 && packet.sequence_number != 0) {
         logger_log(channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red receive", "channel %d: first seq_pdu != 0", channel_id);
 
+        freeRastaByteArray(&packet.data.data);
+        freeRastaByteArray(&packet.data.checksum);
         return 0;
     }
 
@@ -119,7 +109,6 @@ static int red_f_processData(rasta_redundancy_channel *channel, struct RastaRedu
         }
 
         // discard message
-        return 0;
     } else if (packet.sequence_number == channel->seq_rx) {
         logger_log(channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red receive", "channel %d: correct seq. nr. delivering to next layer",
                    channel_id);
@@ -139,6 +128,8 @@ static int red_f_processData(rasta_redundancy_channel *channel, struct RastaRedu
 
         if (!deferqueue_add(&channel->defer_q, packet, cur_timestamp())) {
             logger_log(channel->logger, LOG_LEVEL_INFO, "RaSTA Red receive", "discarded packet because defer queue was full");
+            freeRastaByteArray(&packet.data.data);
+            freeRastaByteArray(&packet.data.checksum);
         }
 
         return 1;
@@ -152,14 +143,12 @@ static int red_f_processData(rasta_redundancy_channel *channel, struct RastaRedu
 
             // discard message
             // possibly statistic analysis
-            return 0;
         } else {
             // check if queue is full
             if (deferqueue_isfull(&channel->defer_q)) {
                 logger_log(channel->logger, LOG_LEVEL_INFO, "RaSTA Red receive", "channel %d: deferq full", channel_id);
 
                 // full -> discard message
-                return 0;
             } else {
                 logger_log(channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red receive", "channel %d: adding message to deferq",
                            channel_id);
@@ -167,6 +156,8 @@ static int red_f_processData(rasta_redundancy_channel *channel, struct RastaRedu
                 // add message to defer queue
                 if (!deferqueue_add(&channel->defer_q, packet, cur_timestamp())) {
                     logger_log(channel->logger, LOG_LEVEL_INFO, "RaSTA Red receive", "discarded packet because defer queue was full");
+                } else {
+                    return 0;
                 }
             }
         }
@@ -174,25 +165,11 @@ static int red_f_processData(rasta_redundancy_channel *channel, struct RastaRedu
         logger_log(channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red receive", "channel %d: seq_pdu > seq_rx + 10 * MAX_DEFERQUEUE_SIZE", channel_id);
 
         // discard message
-        return 0;
     }
 
-    return result;
-}
-
-int red_f_receiveData(rasta_redundancy_channel *channel, struct RastaRedundancyPacket packet, int channel_id) {
-    unsigned int deferred_count = channel->defer_q.count;
-    int result = red_f_processData(channel, packet, channel_id);
-
-    // The defer queue takes ownership of the packet's byte arrays and frees them on delivery.
-    // Discarded packets (e.g. duplicates received on another transport channel) have to be freed here.
-    // length is 0 if bytesToRastaPacket rejected the packet before allocating anything.
-    if (channel->defer_q.count == deferred_count && packet.data.length != 0) {
-        freeRastaByteArray(&packet.data.data);
-        freeRastaByteArray(&packet.data.checksum);
-    }
-
-    return result;
+    freeRastaByteArray(&packet.data.data);
+    freeRastaByteArray(&packet.data.checksum);
+    return 0;
 }
 
 void red_f_deferTmo(rasta_connection *h, rasta_redundancy_channel *channel) {
