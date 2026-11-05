@@ -18,8 +18,8 @@ rasta_error_type getRastamoduleLastError() {
  * @param result the assigned uchar array; length should be 2
  */
 void hostShortTole(uint16_t v, unsigned char *result) {
-    uint16_t *target = (uint16_t *)result;
-    *target = rasta_htole16(v);
+    v = rasta_htole16(v);
+    rmemcpy(result, &v, sizeof(v));
 }
 
 /**
@@ -28,8 +28,9 @@ void hostShortTole(uint16_t v, unsigned char *result) {
  * @return the ushort
  */
 uint16_t leShortToHost(const unsigned char *v) {
-    const uint16_t *value_network_byte_order = (uint16_t *)v;
-    return rasta_le16toh(*value_network_byte_order);
+    uint16_t value;
+    rmemcpy(&value, v, sizeof(value));
+    return rasta_le16toh(value);
 }
 
 unsigned int getDataLength(struct RastaPacket *packet, rasta_hashing_context_t *hashing_context) {
