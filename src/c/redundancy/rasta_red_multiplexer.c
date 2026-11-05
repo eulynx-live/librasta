@@ -76,10 +76,25 @@ int receive_packet(redundancy_mux *mux, rasta_transport_channel *transport_chann
     int result = 0;
     logger_log(mux->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux receive", "channel %d received data len = %zu", transport_channel->id, len);
 
+    // minimum size of a redundancy packet on the wire: 8 byte header (length, reserve,
+    // seq nr) plus the trailing checksum
+    const size_t min_packet_size = 8 + (mux->config->redundancy.crc_type.width / 8);
+
     size_t len_remaining = len;
     size_t read_offset = 0;
     while (len_remaining > 0) {
-        uint16_t currentPacketSize = leShortToHost(&buffer[read_offset]);
+        const uint16_t currentPacketSize = leShortToHost(&buffer[read_offset]);
+
+        // The packet size is taken from the wire and must not be trusted blindly:
+        // a value of 0 would loop forever and a value exceeding the remaining bytes
+        // would underflow len_remaining and read out of bounds.
+        if (currentPacketSize < min_packet_size || currentPacketSize > len_remaining) {
+            logger_log(mux->logger, LOG_LEVEL_INFO, "RaSTA RedMux receive",
+                       "discarding datagram with invalid packet size %u (remaining %zu)",
+                       currentPacketSize, len_remaining);
+            break;
+        }
+        
         struct RastaRedundancyPacket receivedPacket;
         handle_received_data(mux, buffer + read_offset, currentPacketSize, &receivedPacket);
         // Check that deferqueue can take new elements before calling red_f_receiveData

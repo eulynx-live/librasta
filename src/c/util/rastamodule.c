@@ -248,6 +248,18 @@ struct RastaByteArray rastaRedundancyPacketToBytes(struct RastaRedundancyPacket 
 void bytesToRastaRedundancyPacket(struct RastaByteArray data, struct crc_options checksum_type, rasta_hashing_context_t *hashing_context, struct RastaRedundancyPacket *packet) {
     packet->checksum_type = checksum_type;
 
+    // The received data must at least contain the 8 byte header (length, reserve, seq nr)
+    // and the trailing checksum. Otherwise the length arithmetic below would underflow and
+    // cause out-of-bounds reads. The carried data (and its checksum) are zeroed so the caller
+    // can safely free packet->data.data and packet->data.checksum.
+    if (data.length < 8u + (unsigned int)(checksum_type.width / 8)) {
+        rmemset(packet, 0, sizeof(*packet));
+        packet->checksum_type = checksum_type;
+        packet->checksum_correct = 0;
+        rastamodule_lasterror = RASTA_ERRORS_PACKAGE_LENGTH_INVALID;
+        return;
+    }
+
     // length
     packet->length = leShortToHost(&data.bytes[0]);
 
