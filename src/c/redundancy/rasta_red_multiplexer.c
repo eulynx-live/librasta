@@ -83,6 +83,14 @@ int receive_packet(redundancy_mux *mux, rasta_transport_channel *transport_chann
     size_t len_remaining = len;
     size_t read_offset = 0;
     while (len_remaining > 0) {
+        // leShortToHost need at least two more valid bytes
+        if (len_remaining < 2) {
+            logger_log(mux->logger, LOG_LEVEL_INFO, "RaSTA RedMux receive",
+                       "discarding datagram with remaining size %zu",
+                       len_remaining);
+            break;
+        }
+
         const uint16_t currentPacketSize = leShortToHost(&buffer[read_offset]);
 
         // The packet size is taken from the wire and must not be trusted blindly:
@@ -94,7 +102,7 @@ int receive_packet(redundancy_mux *mux, rasta_transport_channel *transport_chann
                        currentPacketSize, len_remaining);
             break;
         }
-        
+
         struct RastaRedundancyPacket receivedPacket;
         handle_received_data(mux, buffer + read_offset, currentPacketSize, &receivedPacket);
         // Check that deferqueue can take new elements before calling red_f_receiveData
