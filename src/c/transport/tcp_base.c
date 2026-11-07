@@ -96,7 +96,7 @@ void transport_close_channel(rasta_transport_channel *channel) {
 
 void transport_close_socket(rasta_transport_socket *socket) {
     if (socket->file_descriptor != -1) {
-        bsd_close(socket->file_descriptor);
+        tcp_close_socket(socket);
         socket->file_descriptor = -1;
     }
 

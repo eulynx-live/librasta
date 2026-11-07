@@ -55,4 +55,10 @@ void tcp_send(rasta_transport_channel *transport_channel, unsigned char *message
  */
 void tcp_close(rasta_transport_channel *transport_channel);
 
+/**
+ * Closes the listening/connecting socket and releases its resources
+ * @param transport_socket the socket to close
+ */
+void tcp_close_socket(rasta_transport_socket *transport_socket);
+
 void get_client_addr_from_socket(const rasta_transport_socket *transport_socket, struct sockaddr_in *client_addr, socklen_t *addr_len);

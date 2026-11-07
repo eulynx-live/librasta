@@ -219,3 +219,13 @@ void tcp_close(rasta_transport_channel *transport_channel) {
     wolfssl_cleanup_channel(transport_channel);
     bsd_close(transport_channel->file_descriptor);
 }
+
+void tcp_close_socket(rasta_transport_socket *transport_socket) {
+    // Sessions of accepted connections are owned by their channels,
+    // only the server context belongs to the socket
+    wolfSSL_CTX_free(transport_socket->ctx);
+    transport_socket->ctx = NULL;
+    transport_socket->ssl = NULL;
+    transport_socket->tls_state = RASTA_TLS_CONNECTION_CLOSED;
+    bsd_close(transport_socket->file_descriptor);
+}
