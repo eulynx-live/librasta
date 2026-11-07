@@ -112,12 +112,22 @@ CTEST_ARGS=(--test-dir "$BUILD_DIR" --show-only=json-v1)
 
 mapfile -t TESTS < <(ctest "${CTEST_ARGS[@]}" | python3 -c '
 import json, sys
-for t in json.load(sys.stdin).get("tests", []):
-    if not t.get("command"):
-        continue
-    wd = next((p["value"] for p in t.get("properties", [])
-               if p["name"] == "WORKING_DIRECTORY"), "")
-    print("\x1f".join([t["name"], wd] + t["command"]))
+
+def prop(test, name):
+    return next((p["value"] for p in test.get("properties", [])
+                 if p["name"] == name), None)
+
+def order(test):
+    # run fixture setup tests first and fixture cleanup tests last
+    if prop(test, "FIXTURES_SETUP"):
+        return 0
+    if prop(test, "FIXTURES_CLEANUP"):
+        return 2
+    return 1
+
+tests = [t for t in json.load(sys.stdin).get("tests", []) if t.get("command")]
+for t in sorted(tests, key=order):
+    print("\x1f".join([t["name"], prop(t, "WORKING_DIRECTORY") or ""] + t["command"]))
 ')
 
 if [[ ${#TESTS[@]} -eq 0 ]]; then
@@ -148,8 +158,10 @@ for entry in "${TESTS[@]}"; do
 
     printf '%s==> %-45s%s ' "$BOLD" "$name" "$RESET"
     set +e
-    (cd "$workdir" && valgrind "${VALGRIND_OPTS[@]}" --log-file="$log" "${cmd[@]}") \
-        >"${LOG_DIR}/${name}.stdout" 2>&1
+    # The outer redirect silences bash's own "Aborted (core dumped)" message
+    # when a test is killed by a signal; the exit code is reported below.
+    { (cd "$workdir" && valgrind "${VALGRIND_OPTS[@]}" --log-file="$log" "${cmd[@]}") \
+        >"${LOG_DIR}/${name}.stdout" 2>&1; } 2>/dev/null
     rc=$?
     set -e
 
