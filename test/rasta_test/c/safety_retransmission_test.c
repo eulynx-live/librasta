@@ -264,7 +264,8 @@ void test_sr_handle_conreq_shouldInitializeSequenceNumberFromConfig() {
 
     mux.redundancy_channel = &fake_channel;
 
-    struct rasta_connection connection;
+    struct rasta_connection connection = {};
+    connection.current_state = RASTA_CONNECTION_CLOSED;
     connection.my_id = SERVER_ID;
     connection.remote_id = CLIENT_ID;
     connection.fifo_retransmission = fifo_init(1);
