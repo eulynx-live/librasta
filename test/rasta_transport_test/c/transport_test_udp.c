@@ -155,4 +155,7 @@ void test_transport_bind_should_bind_socket_fd() {
 
     // Assert
     CU_ASSERT_EQUAL(mock_bind_call_count, 1);
+
+    // Cleanup
+    transport_close_socket(&socket);
 }

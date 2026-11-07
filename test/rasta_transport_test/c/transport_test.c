@@ -149,6 +149,9 @@ void test_transport_connect_should_set_connected() {
 
     // Assert
     CU_ASSERT(channel.connected);
+
+    // Cleanup
+    transport_close_channel(&channel);
 }
 
 void test_transport_connect_should_set_equal_fds() {
@@ -175,4 +178,7 @@ void test_transport_connect_should_set_equal_fds() {
 
     // Assert
     CU_ASSERT_EQUAL(channel.file_descriptor, socket.file_descriptor);
+
+    // Cleanup
+    transport_close_channel(&channel);
 }
