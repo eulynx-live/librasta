@@ -445,6 +445,7 @@ void handle_conreq(struct rasta_connection *connection, struct RastaPacket *rece
             redundancy_mux_send(connection->redundancy_channel, &conresp, connection->role);
 
             freeRastaByteArray(&conresp.data);
+            freeRastaByteArray(&conresp.checksum);
         } else {
             logger_log(connection->logger, LOG_LEVEL_INFO, "RaSTA HANDLE: ConnectionRequest", "Version unacceptable - sending DisconnectionRequest");
             sr_close_connection(connection, RASTA_DISC_REASON_INCOMPATIBLEVERSION, 0);

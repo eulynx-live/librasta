@@ -36,6 +36,7 @@ void checkConnectionPacket() {
         }
 
         freeRastaByteArray(&r.data);
+        freeRastaByteArray(&r.checksum);
 
         r = createConnectionResponse(1, 2, 3, 4, 5, 6, 7, ver, &context);
 
@@ -61,6 +62,7 @@ void checkConnectionPacket() {
         CU_ASSERT_EQUAL(getRastafactoryLastError(), RASTA_ERRORS_WRONG_PACKAGE_FORMAT);
 
         freeRastaByteArray(&r.data);
+        freeRastaByteArray(&r.checksum);
     }
 
     freeRastaByteArray(&context.key);
@@ -87,6 +89,9 @@ void checkNormalPacket() {
         CU_ASSERT_EQUAL(r.confirmed_timestamp, 6);
         CU_ASSERT_EQUAL(r.type, RASTA_TYPE_RETRREQ);
 
+        freeRastaByteArray(&r.data);
+        freeRastaByteArray(&r.checksum);
+
         r = createRetransmissionResponse(1, 2, 3, 4, 5, 6, &hashing_context);
         // check standart values
         CU_ASSERT_EQUAL(r.length, 28 + hashing_context.hash_length * 8);
@@ -98,6 +103,9 @@ void checkNormalPacket() {
         CU_ASSERT_EQUAL(r.confirmed_timestamp, 6);
         CU_ASSERT_EQUAL(r.type, RASTA_TYPE_RETRRESP);
 
+        freeRastaByteArray(&r.data);
+        freeRastaByteArray(&r.checksum);
+
         r = createHeartbeat(1, 2, 3, 4, 5, 6, &hashing_context);
         // check standart values
         CU_ASSERT_EQUAL(r.length, 28 + hashing_context.hash_length * 8);
@@ -108,6 +116,9 @@ void checkNormalPacket() {
         CU_ASSERT_EQUAL(r.timestamp, 5);
         CU_ASSERT_EQUAL(r.confirmed_timestamp, 6);
         CU_ASSERT_EQUAL(r.type, RASTA_TYPE_HB);
+
+        freeRastaByteArray(&r.data);
+        freeRastaByteArray(&r.checksum);
     }
 
     freeRastaByteArray(&hashing_context.key);
@@ -146,6 +157,7 @@ void checkDisconnectionRequest() {
         CU_ASSERT_EQUAL(getRastafactoryLastError(), RASTA_ERRORS_WRONG_PACKAGE_FORMAT);
 
         freeRastaByteArray(&r.data);
+        freeRastaByteArray(&r.checksum);
     }
 
     freeRastaByteArray(&hashing_context.key);
@@ -204,6 +216,7 @@ void checkMessagePacket() {
 
         freeRastaMessageData(&m);
         freeRastaByteArray(&r.data);
+        freeRastaByteArray(&r.checksum);
 
         // check retransmitted message data
         r = createRetransmittedDataMessage(1, 2, 3, 4, 5, 6, data, &hashing_context);
@@ -230,6 +243,7 @@ void checkMessagePacket() {
 
         freeRastaMessageData(&m);
         freeRastaByteArray(&r.data);
+        freeRastaByteArray(&r.checksum);
     }
 
     freeRastaMessageData(&data);

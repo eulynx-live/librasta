@@ -86,4 +86,25 @@ target_compile_definitions(rasta_transport_test_tcp PUBLIC TEST_TCP)
 if(ENABLE_RASTA_TLS)
     target_compile_definitions(rasta_transport_test_dtls PUBLIC TEST_UDP ENABLE_TLS)
     target_compile_definitions(rasta_transport_test_tls PUBLIC TEST_TCP ENABLE_TLS)
+
+    # The TLS/DTLS tests load their certificates from ../examples (relative to
+    # this directory). Generate them as a test fixture so that the tests do not
+    # depend on the rcat examples having been run before.
+    add_executable(generate_test_certificates
+        rasta_transport_test/c/generate_certificates.c
+        ../examples/rcat/c/wolfssl_certificate_helper.c
+    )
+    target_include_directories(generate_test_certificates PRIVATE ../examples/rcat/c)
+    target_link_libraries(generate_test_certificates wolfssl)
+
+    set(TEST_CERT_DIR ${CMAKE_CURRENT_BINARY_DIR}/../examples)
+    file(MAKE_DIRECTORY ${TEST_CERT_DIR})
+    add_test(NAME generate_test_certificates
+             COMMAND generate_test_certificates
+                     ${TEST_CERT_DIR}/root-ca.pem
+                     ${TEST_CERT_DIR}/server.pem
+                     ${TEST_CERT_DIR}/server.key)
+    set_tests_properties(generate_test_certificates PROPERTIES FIXTURES_SETUP tls_certificates)
+    set_tests_properties(test_rasta_transport_test_dtls test_rasta_transport_test_tls
+                         PROPERTIES FIXTURES_REQUIRED tls_certificates)
 endif(ENABLE_RASTA_TLS)

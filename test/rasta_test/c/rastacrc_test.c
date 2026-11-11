@@ -10,7 +10,7 @@
 
 void test_opt_b() {
     struct RastaByteArray data_to_test;
-    allocateRastaByteArray(&data_to_test, 9);
+    data_to_test.length = 9;
     data_to_test.bytes = (unsigned char *)TEST_VAL;
 
     struct crc_options options_b = crc_init_opt_b();
@@ -23,7 +23,7 @@ void test_opt_b() {
 
 void test_opt_c() {
     struct RastaByteArray data_to_test;
-    allocateRastaByteArray(&data_to_test, 9);
+    data_to_test.length = 9;
     data_to_test.bytes = (unsigned char *)TEST_VAL;
 
     struct crc_options options_c = crc_init_opt_c();
@@ -36,7 +36,7 @@ void test_opt_c() {
 
 void test_opt_d() {
     struct RastaByteArray data_to_test;
-    allocateRastaByteArray(&data_to_test, 9);
+    data_to_test.length = 9;
     data_to_test.bytes = (unsigned char *)TEST_VAL;
 
     struct crc_options options_d = crc_init_opt_d();
@@ -49,7 +49,7 @@ void test_opt_d() {
 
 void test_opt_e() {
     struct RastaByteArray data_to_test;
-    allocateRastaByteArray(&data_to_test, 9);
+    data_to_test.length = 9;
     data_to_test.bytes = (unsigned char *)TEST_VAL;
 
     struct crc_options options_e = crc_init_opt_e();
@@ -62,7 +62,7 @@ void test_opt_e() {
 
 void test_without_gen_table() {
     struct RastaByteArray data_to_test;
-    allocateRastaByteArray(&data_to_test, 9);
+    data_to_test.length = 9;
     data_to_test.bytes = (unsigned char *)TEST_VAL;
 
     struct crc_options options_b = crc_init_opt_b();

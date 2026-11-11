@@ -56,6 +56,10 @@ void tcp_close(rasta_transport_channel *transport_channel) {
     bsd_close(transport_channel->file_descriptor);
 }
 
+void tcp_close_socket(rasta_transport_socket *transport_socket) {
+    bsd_close(transport_socket->file_descriptor);
+}
+
 int tcp_connect(rasta_transport_channel *channel) {
     struct sockaddr_in server;
 

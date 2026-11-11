@@ -53,8 +53,8 @@ if(ENABLE_RASTA_OPAQUE)
             NAMES_PER_DIR
             DOC "GNU Make" REQUIRED)
 
-    configure_file(cmake/IncludeLibOpaque.cmake libopaque-timeout/CMakeLists.txt)
-    execute_process(COMMAND ${CMAKE_COMMAND} -DGNU_MAKE_PATH=${GNU_MAKE_PATH} -G "${CMAKE_GENERATOR}" .
+    configure_file(cmake/IncludeLibOpaque.cmake libopaque-timeout/CMakeLists.txt @ONLY)
+    execute_process(COMMAND ${CMAKE_COMMAND} -DGNU_MAKE_PATH=${GNU_MAKE_PATH} -DBUILD_TESTING=${BUILD_TESTING} -G "${CMAKE_GENERATOR}" .
             RESULT_VARIABLE result
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/libopaque-timeout)
     if (result)

@@ -175,17 +175,22 @@ void rasta_disconnect(rasta_connection *connection) {
     sr_disconnect(connection);
 }
 
-void rasta_cleanup(rasta *user_configuration) {
-    sr_cleanup(&user_configuration->h);
-
+static void destroy_byte_array_fifo(fifo_t **fifo) {
     struct RastaByteArray *elem;
-    while ((elem = fifo_pop(user_configuration->h.rasta_connection->fifo_retransmission))) {
+    while ((elem = fifo_pop(*fifo))) {
         freeRastaByteArray(elem);
         rfree(elem);
     }
-    fifo_destroy(&user_configuration->h.rasta_connection->fifo_retransmission);
-    fifo_destroy(&user_configuration->h.rasta_connection->fifo_send);
-    fifo_destroy(&user_configuration->h.rasta_connection->fifo_receive);
+    fifo_destroy(fifo);
+}
+
+void rasta_cleanup(rasta *user_configuration) {
+    sr_cleanup(&user_configuration->h);
+
+    // All three queues hold allocated byte arrays
+    destroy_byte_array_fifo(&user_configuration->h.rasta_connection->fifo_retransmission);
+    destroy_byte_array_fifo(&user_configuration->h.rasta_connection->fifo_send);
+    destroy_byte_array_fifo(&user_configuration->h.rasta_connection->fifo_receive);
 
     rfree(user_configuration->h.rasta_connection);
     rfree(user_configuration);

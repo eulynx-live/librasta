@@ -56,14 +56,14 @@ int red_f_deliverDeferQueue(rasta_connection *con, rasta_redundancy_channel *cha
 }
 
 int red_f_receiveData(rasta_redundancy_channel *channel, struct RastaRedundancyPacket packet, int channel_id) {
-    int result = 0;
-
     logger_log(channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red receive", "Channel %d: ptr=%p", channel_id, (void *)channel);
 
     if (!packet.checksum_correct) {
         logger_log(channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red receive", "Channel 0: Packet checksum incorrect on channel %d", channel_id);
 
         // checksum incorrect, exit function
+        freeRastaByteArray(&packet.data.data);
+        freeRastaByteArray(&packet.data.checksum);
         return 0;
     }
 
@@ -78,6 +78,8 @@ int red_f_receiveData(rasta_redundancy_channel *channel, struct RastaRedundancyP
     if (channel->seq_rx == 0 && channel->seq_tx == 0 && packet.sequence_number != 0) {
         logger_log(channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red receive", "channel %d: first seq_pdu != 0", channel_id);
 
+        freeRastaByteArray(&packet.data.data);
+        freeRastaByteArray(&packet.data.checksum);
         return 0;
     }
 
@@ -107,7 +109,6 @@ int red_f_receiveData(rasta_redundancy_channel *channel, struct RastaRedundancyP
         }
 
         // discard message
-        return 0;
     } else if (packet.sequence_number == channel->seq_rx) {
         logger_log(channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red receive", "channel %d: correct seq. nr. delivering to next layer",
                    channel_id);
@@ -127,6 +128,8 @@ int red_f_receiveData(rasta_redundancy_channel *channel, struct RastaRedundancyP
 
         if (!deferqueue_add(&channel->defer_q, packet, cur_timestamp())) {
             logger_log(channel->logger, LOG_LEVEL_INFO, "RaSTA Red receive", "discarded packet because defer queue was full");
+            freeRastaByteArray(&packet.data.data);
+            freeRastaByteArray(&packet.data.checksum);
         }
 
         return 1;
@@ -140,14 +143,12 @@ int red_f_receiveData(rasta_redundancy_channel *channel, struct RastaRedundancyP
 
             // discard message
             // possibly statistic analysis
-            return 0;
         } else {
             // check if queue is full
             if (deferqueue_isfull(&channel->defer_q)) {
                 logger_log(channel->logger, LOG_LEVEL_INFO, "RaSTA Red receive", "channel %d: deferq full", channel_id);
 
                 // full -> discard message
-                return 0;
             } else {
                 logger_log(channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red receive", "channel %d: adding message to deferq",
                            channel_id);
@@ -155,6 +156,8 @@ int red_f_receiveData(rasta_redundancy_channel *channel, struct RastaRedundancyP
                 // add message to defer queue
                 if (!deferqueue_add(&channel->defer_q, packet, cur_timestamp())) {
                     logger_log(channel->logger, LOG_LEVEL_INFO, "RaSTA Red receive", "discarded packet because defer queue was full");
+                } else {
+                    return 0;
                 }
             }
         }
@@ -162,10 +165,11 @@ int red_f_receiveData(rasta_redundancy_channel *channel, struct RastaRedundancyP
         logger_log(channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red receive", "channel %d: seq_pdu > seq_rx + 10 * MAX_DEFERQUEUE_SIZE", channel_id);
 
         // discard message
-        return 0;
     }
 
-    return result;
+    freeRastaByteArray(&packet.data.data);
+    freeRastaByteArray(&packet.data.checksum);
+    return 0;
 }
 
 void red_f_deferTmo(rasta_connection *h, rasta_redundancy_channel *channel) {

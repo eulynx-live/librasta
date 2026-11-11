@@ -41,8 +41,11 @@ int channel_accept_event(void *carry_data, int _fd) {
         channel->associated_socket = data->socket;
 #ifdef ENABLE_TLS
         channel->tls_state = RASTA_TLS_CONNECTION_READY;
-        channel->ctx = data->socket->ctx;
+        // The WolfSSL context belongs to the listening socket and is shared by
+        // all accepted channels, only the session is owned by the channel
+        channel->ctx = NULL;
         channel->ssl = data->socket->ssl;
+        data->socket->ssl = NULL;
 #endif
 
         if (channel->receive_event.callback != NULL) {
@@ -50,6 +53,12 @@ int channel_accept_event(void *carry_data, int _fd) {
         }
     } else {
         logger_log(data->h->mux.logger, LOG_LEVEL_INFO, "RaSTA RedMux accept", "Rejecting connection from unknown peer %s:%u", str, ntohs(addr.sin_port));
+#ifdef ENABLE_TLS
+        // Nobody takes over the session created during accept, so release it here
+        wolfSSL_shutdown(data->socket->ssl);
+        wolfSSL_free(data->socket->ssl);
+        data->socket->ssl = NULL;
+#endif
         close(fd);
     }
 
@@ -265,6 +274,7 @@ int data_send_event(void *carry_data, int fd) {
             freeRastaMessageData(&app_messages);
             freeRastaByteArray(&packet);
             freeRastaByteArray(&data.data);
+            freeRastaByteArray(&data.checksum);
         }
     }
 

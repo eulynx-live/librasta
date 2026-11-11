@@ -53,12 +53,14 @@ struct RastaPacket initializePacket(rasta_conn_type type, uint32_t receiver_id, 
     if (data_length > 0) {
         allocateRastaByteArray(&result.data, data_length);
     } else {
+        result.data.bytes = NULL;
         result.data.length = 0;
     }
 
     if (hashing_context->hash_length > 0) {
         allocateRastaByteArray(&result.checksum, hashing_context->hash_length * 8);
     } else {
+        result.checksum.bytes = NULL;
         result.checksum.length = 0;
     }
 

@@ -34,6 +34,7 @@ uint32_t cur_timestamp() {
 void freeRastaByteArray(struct RastaByteArray *data) {
     data->length = 0;
     rfree(data->bytes);
+    data->bytes = NULL;
 }
 
 void allocateRastaByteArray(struct RastaByteArray *data, unsigned int length) {

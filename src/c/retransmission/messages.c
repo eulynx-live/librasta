@@ -24,6 +24,7 @@ void sendDisconnectionRequest(struct rasta_connection *connection, rasta_disconn
     redundancy_mux_send(connection->redundancy_channel, &discReq, connection->role);
 
     freeRastaByteArray(&discReq.data);
+    freeRastaByteArray(&discReq.checksum);
 }
 
 /**
@@ -37,6 +38,8 @@ void sendHeartbeat(struct rasta_connection *connection, char reschedule_manually
                                             connection->cs_t, cur_timestamp(), connection->ts_r, &connection->redundancy_channel->mux->sr_hashing_context);
 
     redundancy_mux_send(connection->redundancy_channel, &hb, connection->role);
+    freeRastaByteArray(&hb.data);
+    freeRastaByteArray(&hb.checksum);
 
     connection->sn_t = connection->sn_t + 1;
     if (reschedule_manually) {
@@ -50,6 +53,8 @@ void sendRetransmissionRequest(struct rasta_connection *connection) {
                                                              connection->ts_r, &connection->redundancy_channel->mux->sr_hashing_context);
 
     redundancy_mux_send(connection->redundancy_channel, &retrreq, connection->role);
+    freeRastaByteArray(&retrreq.data);
+    freeRastaByteArray(&retrreq.checksum);
 
     connection->sn_t = connection->sn_t + 1;
 }
@@ -60,5 +65,7 @@ void sendRetransmissionResponse(struct rasta_connection *connection) {
                                                                connection->ts_r, &connection->redundancy_channel->mux->sr_hashing_context);
 
     redundancy_mux_send(connection->redundancy_channel, &retrresp, connection->role);
+    freeRastaByteArray(&retrresp.data);
+    freeRastaByteArray(&retrresp.checksum);
     connection->sn_t = connection->sn_t + 1;
 }

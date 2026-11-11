@@ -98,6 +98,9 @@ void test_transport_listen_should_enable_socket_accept_event() {
 
     // Assert
     CU_ASSERT(socket.accept_event.enabled);
+
+    // Cleanup
+    transport_close_socket(&socket);
 }
 
 void test_transport_connect_should_enable_channel_receive_event() {
@@ -127,6 +130,9 @@ void test_transport_connect_should_enable_channel_receive_event() {
 
     // Assert
     CU_ASSERT(channel.receive_event.enabled);
+
+    // Cleanup
+    transport_close_channel(&channel);
 }
 
 void test_transport_close_channel_should_set_unconnected() {
@@ -251,6 +257,9 @@ void test_transport_redial_should_reconnect() {
 
     // Assert
     CU_ASSERT(channel.connected);
+
+    // Cleanup
+    transport_close_channel(&channel);
 }
 
 void test_transport_redial_should_assign_new_fds() {
@@ -292,6 +301,9 @@ void test_transport_redial_should_assign_new_fds() {
     // Assert
     CU_ASSERT_NOT_EQUAL(channel.file_descriptor, -1);
     CU_ASSERT_NOT_EQUAL(socket.file_descriptor, -1);
+
+    // Cleanup
+    transport_close_channel(&channel);
 }
 
 void test_transport_redial_should_update_event_fds() {
@@ -333,4 +345,7 @@ void test_transport_redial_should_update_event_fds() {
     // Assert
     CU_ASSERT_EQUAL(socket.accept_event.fd, socket.file_descriptor);
     CU_ASSERT_EQUAL(socket.receive_event.fd, socket.file_descriptor);
+
+    // Cleanup
+    transport_close_channel(&channel);
 }
