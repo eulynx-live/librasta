@@ -1,0 +1,13 @@
+{
+    "dependencies": [
+        {
+            "name": "wolfssl",
+            "features": [
+                "dtls",
+                "secret-callback"
+            ]
+        },
+        "grpc",
+        "cunit"
+    ]
+}
