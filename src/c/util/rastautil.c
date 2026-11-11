@@ -50,11 +50,12 @@ int isBigEndian() {
 }
 
 void hostLongToLe(uint32_t v, unsigned char *result) {
-    uint32_t *target = (uint32_t *)result;
-    *target = rasta_htole32(v);
+    v = rasta_htole32(v);
+    rmemcpy(result, &v, sizeof(v));
 }
 
 uint32_t leLongToHost(const unsigned char v[4]) {
-    uint32_t *result = (uint32_t *)v;
-    return rasta_le32toh(*result);
+    uint32_t result;
+    rmemcpy(&result, v, sizeof(result));
+    return rasta_le32toh(result);
 }

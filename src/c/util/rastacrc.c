@@ -109,6 +109,13 @@ struct crc_options crc_init_opt_e() {
 }
 
 void crc_generate_table(struct crc_options *options) {
+    // width == 0 means no checksum is used (6.3.6 a). The shifts below assume width >= 8,
+    // so computing a table makes no sense and would shift by a negative amount.
+    if (options->width < 8) {
+        options->is_table_generated = 1;
+        return;
+    }
+
     // generate table
     unsigned long bit;
 
@@ -136,6 +143,12 @@ void crc_generate_table(struct crc_options *options) {
     options->is_table_generated = 1;
 }
 unsigned long crc_calculate(struct crc_options *options, struct RastaByteArray data) {
+    // width == 0 means no checksum is used (6.3.6 a); nothing to compute and the
+    // width-8 shifts below would otherwise be a negative shift (undefined behaviour).
+    if (options->width < 8) {
+        return 0;
+    }
+
     if (!options->is_table_generated) {
         crc_generate_table(options);
     }

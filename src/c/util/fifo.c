@@ -71,7 +71,8 @@ int fifo_full(fifo_t *fifo) {
 
 void fifo_destroy(fifo_t **fifo) {
     if (*fifo != NULL) {
-        for (unsigned int i = 0; i < (*fifo)->size; ++i) {
+        // fifo_pop decrements size, so pop until the FIFO is empty
+        while ((*fifo)->size > 0) {
             fifo_pop(*fifo);
         }
 

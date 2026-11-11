@@ -18,8 +18,8 @@ rasta_error_type getRastamoduleLastError() {
  * @param result the assigned uchar array; length should be 2
  */
 void hostShortTole(uint16_t v, unsigned char *result) {
-    uint16_t *target = (uint16_t *)result;
-    *target = rasta_htole16(v);
+    v = rasta_htole16(v);
+    rmemcpy(result, &v, sizeof(v));
 }
 
 /**
@@ -28,8 +28,9 @@ void hostShortTole(uint16_t v, unsigned char *result) {
  * @return the ushort
  */
 uint16_t leShortToHost(const unsigned char *v) {
-    const uint16_t *value_network_byte_order = (uint16_t *)v;
-    return rasta_le16toh(*value_network_byte_order);
+    uint16_t value;
+    rmemcpy(&value, v, sizeof(value));
+    return rasta_le16toh(value);
 }
 
 unsigned int getDataLength(struct RastaPacket *packet, rasta_hashing_context_t *hashing_context) {
@@ -246,6 +247,18 @@ struct RastaByteArray rastaRedundancyPacketToBytes(struct RastaRedundancyPacket 
 
 void bytesToRastaRedundancyPacket(struct RastaByteArray data, struct crc_options checksum_type, rasta_hashing_context_t *hashing_context, struct RastaRedundancyPacket *packet) {
     packet->checksum_type = checksum_type;
+
+    // The received data must at least contain the 8 byte header (length, reserve, seq nr)
+    // and the trailing checksum. Otherwise the length arithmetic below would underflow and
+    // cause out-of-bounds reads. The carried data (and its checksum) are zeroed so the caller
+    // can safely free packet->data.data and packet->data.checksum.
+    if (data.length < 8u + (unsigned int)(checksum_type.width / 8)) {
+        rmemset(packet, 0, sizeof(*packet));
+        packet->checksum_type = checksum_type;
+        packet->checksum_correct = 0;
+        rastamodule_lasterror = RASTA_ERRORS_PACKAGE_LENGTH_INVALID;
+        return;
+    }
 
     // length
     packet->length = leShortToHost(&data.bytes[0]);
